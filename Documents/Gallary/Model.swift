@@ -22,12 +22,21 @@ final class Model{
     static func getImages() -> [URL]{
         var imagesData = [URL]()
         do{
+            let reverse = UserDefaults.standard.bool(forKey: "sort")
             let imagesURL: URL = try manager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            print(imagesURL)
             let contents = try manager.contentsOfDirectory(at: imagesURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])
             for file in contents {
                 imagesData.append(file.absoluteURL)
             }
-            return imagesData
+            if reverse{
+                return imagesData.sorted { url1, url2 in
+                    return url1.lastPathComponent > url2.lastPathComponent }
+            } else {
+                return imagesData.sorted { url1, url2 in
+                    return url1.lastPathComponent < url2.lastPathComponent
+                }
+            }
         } catch {
             print(error)
             return []

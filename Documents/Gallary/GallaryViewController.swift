@@ -7,7 +7,7 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class GallaryViewController: UIViewController {
     
     var images = [UIImage?]()
     var imagesName = [String?]()
@@ -34,10 +34,10 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
         setUpNavBar()
         setupLayout()
         setUpGallary()
+        setUpNotification()
     }
     
     private func setupLayout() {
@@ -57,6 +57,7 @@ class ViewController: UIViewController {
               target: self,
               action: #selector(addImage)
         )
+        navigationItem.hidesBackButton = true
         navigationItem.rightBarButtonItem = rightButtonItem
     }
     @objc private func addImage(){
@@ -65,7 +66,6 @@ class ViewController: UIViewController {
     }
     
     private func setUpGallary(){
-
         for imageURL in Model.getImages(){
             images.append(UIImage(contentsOfFile: imageURL.path))
             imagesName.append(imageURL.lastPathComponent)
@@ -73,9 +73,17 @@ class ViewController: UIViewController {
         tableView.reloadData()
     }
     
+    private func setUpNotification(){
+        NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: nil) { notification in
+            self.images = []
+            self.imagesName = []
+            self.setUpGallary()
+        }
+    }
+    
 }
 
-extension ViewController: UITableViewDataSource, UITableViewDelegate{
+extension GallaryViewController: UITableViewDataSource, UITableViewDelegate{
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         images.count
     }
@@ -112,15 +120,18 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
     }
 }
 
-extension ViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate{
+extension GallaryViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate{
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         if let pickedImageURL = info[UIImagePickerController.InfoKey.imageURL] as? URL{
             let pickedImage = info[UIImagePickerController.InfoKey.originalImage] as! UIImage
-            images.append(pickedImage)
-            imagesName.append(pickedImageURL.lastPathComponent)
+//            images.append(pickedImage)
+//            imagesName.append(pickedImageURL.lastPathComponent)
             
             Model.addImage(imageData: pickedImage.jpegData(compressionQuality: 1.0) ?? Data(), name: pickedImageURL.lastPathComponent)
         }
+        self.imagesName = []
+        self.images = []
+        self.setUpGallary()
         self.tableView.reloadData()
         dismiss(animated: true, completion: nil)
     }
